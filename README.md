@@ -340,6 +340,35 @@ Get the list of legal moves in a structured format (cf struct definition section
 ]
 ```
 
+## `GET /is-move-legal/{move}`
+
+Check the legality of a move.
+
+### Response:
+
+#### 200 OK
+
+If the move is legal
+```application/json
+true
+```
+
+If the move is correctly formed, but illegal (ie, you tried teleportation, necromancy, or violence without the ability to do so...)
+```application/json
+false
+```
+
+#### 400 Bad Request
+
+You tried to verify a malformed move
+```
+examples: 
+[LegalMoveFromString] EZe4 invalid piece side identifier (expected 'W' or 'E', got 'Z')
+[LegalMoveFromString] EWez unable to process coordinates: [NotationToCoords] invalid number (expected [1..10], got 'z')
+[LegalMoveFromString] EWz1 unable to process coordinates: [NotationToCoords] invalid letter (expected [a..j], got 'z')
+...
+```
+
 ## `POST /register`
 
 Register your bot as a player at the start of the game, provide a "token" string to be used as an identifier to register plays (see below)
@@ -412,6 +441,7 @@ examples:
 [LegalMoveFromString] EZe4 invalid piece side identifier (expected 'W' or 'E', got 'Z')
 [LegalMoveFromString] EWez unable to process coordinates: [NotationToCoords] invalid number (expected [1..10], got 'z')
 [LegalMoveFromString] EWz1 unable to process coordinates: [NotationToCoords] invalid letter (expected [a..j], got 'z')
+...
 ```
 
 You tried to become a necromancer and play a dead piece

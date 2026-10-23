@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	game "github.com/nrissot/traversal-clone/game"
@@ -25,11 +26,12 @@ var registerMutex sync.RWMutex
 
 var stateMutex sync.RWMutex
 
+const SHOULD_DISPLAY = true
 const DISPLAY_SHOULD_SHOW_HEIGHT = false
 
 func main() {
 	// setup the game
-	resp, err := game.GetBoard(game.Hell)
+	resp, err := game.GetBoard(game.Random)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,12 +39,14 @@ func main() {
 	api.State.DisplayBoard(DISPLAY_SHOULD_SHOW_HEIGHT)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", HandleRoot)
+	mux.HandleFunc("/", HandleNotFound)
 
 	mux.HandleFunc("GET /board", HandleGet_Board)
 	mux.HandleFunc("GET /state", HandleGet_State)
 	mux.HandleFunc("GET /moves", HandleGet_Moves)
 	mux.HandleFunc("GET /moves/struct", HandleGet_Moves_Struct)
+
+	mux.HandleFunc("GET /is-move-legal/{move}", HandleGet_IsMoveLegal)
 
 	mux.HandleFunc("POST /register", HandlePost_Register)
 	mux.HandleFunc("POST /play", HandlePost_Play)
@@ -53,40 +57,27 @@ func main() {
 	}
 }
 
-func HandleRoot(w http.ResponseWriter, r *http.Request) {
+func HandleNotFound(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
 func HandleGet_Board(w http.ResponseWriter, r *http.Request) {
-
 	stateMutex.RLock()
-	content, err := json.Marshal(api.State.Board)
-	stateMutex.RUnlock()
+	defer stateMutex.RUnlock()
 
+	err := json.NewEncoder(w).Encode(api.State.Board)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	_, err = w.Write(content)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func HandleGet_State(w http.ResponseWriter, r *http.Request) {
-
 	stateMutex.RLock()
-	content, err := json.Marshal(api.State)
-	stateMutex.RUnlock()
+	defer stateMutex.RUnlock()
 
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(content)
+	err := json.NewEncoder(w).Encode(api.State)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -108,18 +99,14 @@ func HandleGet_Moves(w http.ResponseWriter, r *http.Request) {
 	for _, move := range moves {
 		notations = append(notations, move.String())
 	}
-	content, err := json.Marshal(notations)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(content)
+	err = json.NewEncoder(w).Encode(notations)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	api.State.DisplayAllowedMoves(DISPLAY_SHOULD_SHOW_HEIGHT, moves)
+	if SHOULD_DISPLAY {
+		api.State.DisplayAllowedMoves(DISPLAY_SHOULD_SHOW_HEIGHT, moves)
+	}
 }
 
 func HandleGet_Moves_Struct(w http.ResponseWriter, r *http.Request) {
@@ -127,22 +114,17 @@ func HandleGet_Moves_Struct(w http.ResponseWriter, r *http.Request) {
 	stateMutex.RLock()
 	moves, err := api.State.GetAllLegalMoves()
 	stateMutex.RUnlock()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	err = json.NewEncoder(w).Encode(moves)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	content, err := json.Marshal(moves)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(content)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -201,11 +183,7 @@ func (a *Api) Register(color game.PieceColor, token string, w http.ResponseWrite
 		a.BlueBotToken = token
 	}
 	log.Printf("%v Bot Registered: %s", color, token)
-	respBody, err := json.Marshal(PostRegisterResp{color})
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(respBody)
+	err = json.NewEncoder(w).Encode(PostRegisterResp{color})
 	if err != nil {
 		return err
 	}
@@ -273,5 +251,32 @@ func (a Api) IsItTheirTurn(token string) (is_it_their_turn bool, err error) {
 		return token == a.RedBotToken, nil
 	} else {
 		return token == a.BlueBotToken, nil
+	}
+}
+
+func HandleGet_IsMoveLegal(w http.ResponseWriter, r *http.Request) {
+	nota := r.PathValue("move")
+	stateMutex.RLock()
+	_, err := api.State.LegalMoveFromString(nota)
+	stateMutex.RUnlock()
+	isMoveLegal := true
+	if err != nil {
+		if strings.Contains(err.Error(), "unable to check move legality") {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else if strings.Contains(err.Error(), "Illegal Move") {
+			isMoveLegal = false
+		} else {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+	err = json.NewEncoder(w).Encode(isMoveLegal)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
