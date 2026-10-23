@@ -9,7 +9,7 @@ You can simply git clone the project and run `go run .` to execute it, or run `g
 ## struct definition:
 
 ### piece
-```application/json
+```json
 {
   "color":      string, // ∈ {"Red", "Blue"}
   "type":       string,	// ∈ {"S", "V", "E"}
@@ -19,7 +19,7 @@ You can simply git clone the project and run `go run .` to execute it, or run `g
   "alive":		  bool,	  // ∈ {true, false}
 }
 ```
-```example
+```json
 ex: Red Eastern Vanguard, located on g1, currently alive
 {
   "color": "Red",
@@ -31,8 +31,8 @@ ex: Red Eastern Vanguard, located on g1, currently alive
 },
 ```
 
-move
-```application/json
+### move
+```json
 {
   "from_x":	int,	  // ∈ [0..9]
   "from_y":	int,	  // ∈ [0..9]
@@ -42,7 +42,7 @@ move
   "takes":	bool,	  // ∈ {true, false}
 }
 ```
-```example
+```json
 ex: first move, EWe3
 {
   "from_x": 4,
@@ -68,10 +68,11 @@ Get the board as list of list of int.
 ### Responses:
 
 #### 200 OK
-```application/json
+```json
 [10][10]int
 ```
-```example
+```json
+ex:
 [
   [1,3,2,1,1,2,3,3,3,3],
   [3,2,2,1,0,2,3,2,2,3],
@@ -93,7 +94,7 @@ Get the current state of the game.
 ### Responses:
 
 #### 200 OK
-```application/json
+```json
 {
   "board": [10][10]int,
   "pieces": [12]piece,
@@ -103,7 +104,8 @@ Get the current state of the game.
   "history":[]move,
 }
 ```
-```example
+```json
+ex:
 {
   "board": [
     [1,3,2,1,1,2,3,3,3,3],
@@ -272,10 +274,11 @@ row:  [1..10]|"*"             required (destination row, if traversal: "*" inste
 ### Response:
 
 #### 200 OK
-```application/json
+```json
 []string
 ```
-```example
+```json
+ex:
 ["SWd2","SWb2","SWc2","SWb1","SWc3","VWd3","VWe2","VWc2","VWb2","VWd2","VWe1","EWd2","EWf2","EWe4","EWe2","EWd3","EWg3","EWf3","EWe6","EWg4","EWc4","EWe7","EWe1","EWd4","EWd5","EWb3","EWf6","EWc5","EWe5","EWf5","EWh3","EWd6","EWg5","EWc3","EWf4","EEe1","EEh2","EEf3","EEg2","EEe2","EEf2","VEg2","VEg3","VEh2","VEf2","VEi2","SEh2","SEi1","SEi2","SEj1","SEj2"]
 ```
 
@@ -286,10 +289,11 @@ Get the list of legal moves in a structured format (cf struct definition section
 ### Response:
 
 #### 200 OK
-```application/json
+```json
 []move
 ```
-```example
+```json
+ex:
 [
   {
     "from_x": 2,
@@ -349,13 +353,101 @@ Check the legality of a move.
 #### 200 OK
 
 If the move is legal
-```application/json
+```json
 true
 ```
 
 If the move is correctly formed, but illegal (ie, you tried teleportation, necromancy, or violence without the ability to do so...)
-```application/json
+```json
 false
+```
+
+#### 400 Bad Request
+
+You tried to verify a malformed move
+```
+examples: 
+[LegalMoveFromString] EZe4 invalid piece side identifier (expected 'W' or 'E', got 'Z')
+[LegalMoveFromString] EWez unable to process coordinates: [NotationToCoords] invalid number (expected [1..10], got 'z')
+[LegalMoveFromString] EWz1 unable to process coordinates: [NotationToCoords] invalid letter (expected [a..j], got 'z')
+...
+```
+
+## `GET /translate/{move}`
+
+Used to translate a move from notation (cf `GET /moves` for notation definition) into a structured form (cf struct definition)
+> **note**: if you want to get all legal moves as struct, use `GET /moves/struct` instead
+
+### Response:
+
+#### 200 OK
+
+```json
+move
+```
+```json
+ex:
+{
+  "from_x": 2,
+  "from_y": 0,
+  "to_x": 2,
+  "to_y": 1,
+  "piece": {
+    "color": "Red",
+    "type": "S",
+    "direction": "W",
+    "x": 2,
+    "y": 0,
+    "alive": true
+  },
+  "takes": false
+}
+```
+
+#### 400 Bad Request
+
+You tried to verify a malformed or illegal move
+```
+examples: 
+[LegalMoveFromString] EZe4 invalid piece side identifier (expected 'W' or 'E', got 'Z')
+[LegalMoveFromString] EWez unable to process coordinates: [NotationToCoords] invalid number (expected [1..10], got 'z')
+[LegalMoveFromString] EWz1 unable to process coordinates: [NotationToCoords] invalid letter (expected [a..j], got 'z')
+...
+```
+
+## `POST /translate`
+
+Used to translate a move from a structured form to a notation (cf `GET /moves` for notation definition)
+> **note**: this endpoint does not check the legality of a move before converting it, but will raise an error if the move is malformed.
+
+> **note n°2**: do you really need this endpoint ? just do it yourself at this point, here is the python code for that:
+> ```py
+> def move_as_string(move): return f"{move.piece.type}{move.piece.side}{'x' if move.takes else ''}{chr(ord('a')+move.to_x)}{move.to_y+1}"
+> ```
+
+### Body
+
+```json
+{
+  "from_x":	int,	  // ∈ [0..9]
+  "from_y":	int,	  // ∈ [0..9]
+  "to_x":		int,	  // ∈ [0..9]
+  "to_y":		int,	  // ∈ [0..9]
+  "piece":	piece,  // cf piece
+  "takes":	bool,	  // ∈ {true, false}
+}
+```
+
+### Responses
+
+#### 200 OK
+
+```
+string
+```
+```
+example:
+EWf3
 ```
 
 #### 400 Bad Request
@@ -375,7 +467,7 @@ Register your bot as a player at the start of the game, provide a "token" string
 
 ### Body
 
-```application/json
+```json
 {
   "token":<string>
 }
@@ -385,12 +477,12 @@ Register your bot as a player at the start of the game, provide a "token" string
 
 #### 200 OK
 
-```application/json
+```json
 {
   "color":string // ∈ {"Red", "Blue"}
 }
 ```
-```example
+```json
 {
   "color":"Red"
 }
@@ -399,12 +491,12 @@ Register your bot as a player at the start of the game, provide a "token" string
 #### 400 Bad Request
 
 You tried to register twice, or attempted to register using the same token as your opponent.
-```application/json
+```json
 token already registered
 ```
 
 You tried to register when two bots were already registered.
-```application/json
+```json
 roster already full
 ```
 

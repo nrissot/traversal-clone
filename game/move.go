@@ -156,6 +156,17 @@ func (b BoardState) GetAllLegalMoves() (moves []Move, err error) {
 	return moves, nil
 }
 
+func (b BoardState) GetAllLegalMovesAsNotation() (moves []string, err error) {
+	moves_as_struct, err := b.GetAllLegalMoves()
+	if err != nil {
+		return moves, err
+	}
+	for _, move := range moves_as_struct {
+		moves = append(moves, move.String())
+	}
+	return moves, nil
+}
+
 func (b BoardState) GetLegalMoves(p Piece) (moves []Move, err error) {
 	if !slices.Contains(b.Pieces, p) {
 		return moves, fmt.Errorf("[GetLegalMoves] piece %v doesnt exist in the boardState %v", p, b)

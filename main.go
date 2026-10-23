@@ -41,12 +41,20 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", HandleNotFound)
 
+	// get data
 	mux.HandleFunc("GET /board", HandleGet_Board)
 	mux.HandleFunc("GET /state", HandleGet_State)
+
+	// move related
 	mux.HandleFunc("GET /moves", HandleGet_Moves)
 	mux.HandleFunc("GET /moves/struct", HandleGet_Moves_Struct)
-
 	mux.HandleFunc("GET /is-move-legal/{move}", HandleGet_IsMoveLegal)
+
+	// move translations
+	// struct -> notation
+	mux.HandleFunc("POST /translate", HandlePost_Translate)
+	// notation -> struct
+	mux.HandleFunc("GET /translate/{move}", HandleGet_Translate)
 
 	mux.HandleFunc("POST /register", HandlePost_Register)
 	mux.HandleFunc("POST /play", HandlePost_Play)
@@ -274,6 +282,45 @@ func HandleGet_IsMoveLegal(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	err = json.NewEncoder(w).Encode(isMoveLegal)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+func HandlePost_Translate(w http.ResponseWriter, r *http.Request) {
+	var move game.Move
+	err := json.NewDecoder(r.Body).Decode(move)
+	if err != nil || move.String() == "####" {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = json.NewEncoder(w).Encode(move.String())
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func HandleGet_Translate(w http.ResponseWriter, r *http.Request) {
+	nota := r.PathValue("move")
+	stateMutex.RLock()
+	move, err := api.State.LegalMoveFromString(nota)
+	stateMutex.RUnlock()
+	if err != nil {
+		if strings.Contains(err.Error(), "unable to check move legality") {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+	err = json.NewEncoder(w).Encode(move)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

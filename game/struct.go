@@ -99,7 +99,7 @@ func (m Move) String() string {
 	}
 	notation_position, err := CoordsToNotation(m.ToX, m.ToY)
 	if err != nil {
-		panic(err)
+		return "####"
 	}
 	if m.Takes {
 		return fmt.Sprintf("%sx%s", m.Piece.String(), notation_position)
