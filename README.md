@@ -1,57 +1,63 @@
 # API Documentation
 
+this is a clone of the game [Traversal](https://www.traversalgame.com/) available as an API. This project is meant to be used in a bot making competion that a bunch of friend and I are planning to do.
+
+This project uses only go 1.26.9 and the standard library, no external packages.
+
+You can simply git clone the project and run `go run .` to execute it, or run `go buid` to get an executable.
+
 ## struct definition:
 
 ### piece
 ```application/json
 {
-		"color":      string, // ∈ {"Red", "Blue"}
-		"type":       string,	// ∈ {"S", "V", "E"}
-		"direction":  string,	// ∈ {"W", "E"}
-		"x":			    int,	  // ∈ [0..9]
-		"y":			    int,	  // ∈ [0..9]
-		"alive":		  bool,	  // ∈ {true, false}
+  "color":      string, // ∈ {"Red", "Blue"}
+  "type":       string,	// ∈ {"S", "V", "E"}
+  "direction":  string,	// ∈ {"W", "E"}
+  "x":			    int,	  // ∈ [0..9]
+  "y":			    int,	  // ∈ [0..9]
+  "alive":		  bool,	  // ∈ {true, false}
 }
 ```
 ```example
 ex: Red Eastern Vanguard, located on g1, currently alive
 {
-	"color": "Red",
-	"type": "V",
-	"direction": "E",
-	"x": 6,
-	"y": 0,
-	"alive": true
+  "color": "Red",
+  "type": "V",
+  "direction": "E",
+  "x": 6,
+  "y": 0,
+  "alive": true
 },
 ```
 
 move
 ```application/json
 {
-	"from_x":	int,	  // ∈ [0..9]
-	"from_y":	int,	  // ∈ [0..9]
-	"to_x":		int,	  // ∈ [0..9]
-	"to_y":		int,	  // ∈ [0..9]
-	"piece":	piece,  // cf piece
-	"takes":	bool,	  // ∈ {true, false}
+  "from_x":	int,	  // ∈ [0..9]
+  "from_y":	int,	  // ∈ [0..9]
+  "to_x":		int,	  // ∈ [0..9]
+  "to_y":		int,	  // ∈ [0..9]
+  "piece":	piece,  // cf piece
+  "takes":	bool,	  // ∈ {true, false}
 }
 ```
 ```example
 ex: first move, EWe3
 {
-	"from_x": 4,
-	"from_y": 0,
-	"to_x": 4,
-	"to_y": 2,
-	"piece": {
-		"color": "Red",
-		"type": "E",
-		"direction": "W",
-		"x": 4,
-		"y": 0,
-		"alive": true
-	},
-	"takes": false
+  "from_x": 4,
+  "from_y": 0,
+  "to_x": 4,
+  "to_y": 2,
+  "piece": {
+    "color": "Red",
+    "type": "E",
+    "direction": "W",
+    "x": 4,
+    "y": 0,
+    "alive": true
+  },
+  "takes": false
 },
 ```
 
@@ -67,16 +73,16 @@ Get the board as list of list of int.
 ```
 ```example
 [
-	[1,3,2,1,1,2,3,3,3,3],
-	[3,2,2,1,0,2,3,2,2,3],
-	[4,3,3,2,1,0,1,1,1,3],
-	[4,3,3,4,2,2,2,0,1,1],
-	[3,3,2,2,2,2,2,1,1,2],
-	[2,2,2,2,2,2,0,0,0,2],
-	[2,2,2,1,2,2,1,1,1,2],
-	[3,2,0,2,2,2,2,3,2,1],
-	[3,2,2,3,3,3,3,3,1,1],
-	[3,3,4,3,3,3,3,3,2,2]
+  [1,3,2,1,1,2,3,3,3,3],
+  [3,2,2,1,0,2,3,2,2,3],
+  [4,3,3,2,1,0,1,1,1,3],
+  [4,3,3,4,2,2,2,0,1,1],
+  [3,3,2,2,2,2,2,1,1,2],
+  [2,2,2,2,2,2,0,0,0,2],
+  [2,2,2,1,2,2,1,1,1,2],
+  [3,2,0,2,2,2,2,3,2,1],
+  [3,2,2,3,3,3,3,3,1,1],
+  [3,3,4,3,3,3,3,3,2,2]
 ]
 ```
 
@@ -89,164 +95,164 @@ Get the current state of the game.
 #### 200 OK
 ```application/json
 {
-	"board": [10][10]int,
-	"pieces": [12]piece,
-	"turn_number":int,
-	"score":[2]int,
-	"has_traversed":int,
-	"history":[]move,
+  "board": [10][10]int,
+  "pieces": [12]piece,
+  "turn_number":int,
+  "score":[2]int,
+  "has_traversed":int,
+  "history":[]move,
 }
 ```
 ```example
 {
-	"board": [
-		[1,3,2,1,1,2,3,3,3,3],
-		[3,2,2,1,0,2,3,2,2,3],
-		[4,3,3,2,1,0,1,1,1,3],
-		[4,3,3,4,2,2,2,0,1,1],
-		[3,3,2,2,2,2,2,1,1,2],
-		[2,2,2,2,2,2,0,0,0,2],
-		[2,2,2,1,2,2,1,1,1,2],
-		[3,2,0,2,2,2,2,3,2,1],
-		[3,2,2,3,3,3,3,3,1,1],
-		[3,3,4,3,3,3,3,3,2,2]
-	],
-	"pieces": [
-		{
-			"color": "Red",
-			"type": "S",
-			"direction": "W",
-			"x": 2,
-			"y": 0,
-			"alive": true
-		},
-		{
-			"color": "Red",
-			"type": "V",
-			"direction": "W",
-			"x": 3,
-			"y": 0,
-			"alive": true
-		},
-		{
-			"color": "Red",
-			"type": "E",
-			"direction": "W",
-			"x": 4,
-			"y": 2,
-			"alive": true
-		},
-		{
-			"color": "Red",
-			"type": "E",
-			"direction": "E",
-			"x": 5,
-			"y": 0,
-			"alive": true
-		},
-		{
-			"color": "Red",
-			"type": "V",
-			"direction": "E",
-			"x": 6,
-			"y": 0,
-			"alive": true
-		},
-		{
-			"color": "Red",
-			"type": "S",
-			"direction": "E",
-			"x": 7,
-			"y": 0,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "S",
-			"direction": "W",
-			"x": 2,
-			"y": 9,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "V",
-			"direction": "W",
-			"x": 3,
-			"y": 9,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "E",
-			"direction": "W",
-			"x": 4,
-			"y": 9,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "E",
-			"direction": "E",
-			"x": 5,
-			"y": 7,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "V",
-			"direction": "E",
-			"x": 6,
-			"y": 9,
-			"alive": true
-		},
-		{
-			"color": "Blue",
-			"type": "S",
-			"direction": "E",
-			"x": 7,
-			"y": 9,
-			"alive": true
-		}
-	],
-	"turn_number": 2,
-	"score": [
-		0,
-		0
-	],
-	"has_traversed": 0,
-	"history": [
-		{
-			"from_x": 4,
-			"from_y": 0,
-			"to_x": 4,
-			"to_y": 2,
-			"piece": {
-				"color": "Red",
-				"type": "E",
-				"direction": "W",
-				"x": 4,
-				"y": 0,
-				"alive": true
-			},
-			"takes": false
-		},
-		{
-			"from_x": 5,
-			"from_y": 9,
-			"to_x": 5,
-			"to_y": 7,
-			"piece": {
-				"color": "Blue",
-				"type": "E",
-				"direction": "E",
-				"x": 5,
-				"y": 9,
-				"alive": true
-			},
-			"takes": false
-		}
-	]
+  "board": [
+    [1,3,2,1,1,2,3,3,3,3],
+    [3,2,2,1,0,2,3,2,2,3],
+    [4,3,3,2,1,0,1,1,1,3],
+    [4,3,3,4,2,2,2,0,1,1],
+    [3,3,2,2,2,2,2,1,1,2],
+    [2,2,2,2,2,2,0,0,0,2],
+    [2,2,2,1,2,2,1,1,1,2],
+    [3,2,0,2,2,2,2,3,2,1],
+    [3,2,2,3,3,3,3,3,1,1],
+    [3,3,4,3,3,3,3,3,2,2]
+  ],
+  "pieces": [
+    {
+      "color": "Red",
+      "type": "S",
+      "direction": "W",
+      "x": 2,
+      "y": 0,
+      "alive": true
+    },
+    {
+      "color": "Red",
+      "type": "V",
+      "direction": "W",
+      "x": 3,
+      "y": 0,
+      "alive": true
+    },
+    {
+      "color": "Red",
+      "type": "E",
+      "direction": "W",
+      "x": 4,
+      "y": 2,
+      "alive": true
+    },
+    {
+      "color": "Red",
+      "type": "E",
+      "direction": "E",
+      "x": 5,
+      "y": 0,
+      "alive": true
+    },
+    {
+      "color": "Red",
+      "type": "V",
+      "direction": "E",
+      "x": 6,
+      "y": 0,
+      "alive": true
+    },
+    {
+      "color": "Red",
+      "type": "S",
+      "direction": "E",
+      "x": 7,
+      "y": 0,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "S",
+      "direction": "W",
+      "x": 2,
+      "y": 9,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "V",
+      "direction": "W",
+      "x": 3,
+      "y": 9,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "E",
+      "direction": "W",
+      "x": 4,
+      "y": 9,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "E",
+      "direction": "E",
+      "x": 5,
+      "y": 7,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "V",
+      "direction": "E",
+      "x": 6,
+      "y": 9,
+      "alive": true
+    },
+    {
+      "color": "Blue",
+      "type": "S",
+      "direction": "E",
+      "x": 7,
+      "y": 9,
+      "alive": true
+    }
+  ],
+  "turn_number": 2,
+  "score": [
+    0,
+    0
+  ],
+  "has_traversed": 0,
+  "history": [
+    {
+      "from_x": 4,
+      "from_y": 0,
+      "to_x": 4,
+      "to_y": 2,
+      "piece": {
+        "color": "Red",
+        "type": "E",
+        "direction": "W",
+        "x": 4,
+        "y": 0,
+        "alive": true
+      },
+      "takes": false
+    },
+    {
+      "from_x": 5,
+      "from_y": 9,
+      "to_x": 5,
+      "to_y": 7,
+      "piece": {
+        "color": "Blue",
+        "type": "E",
+        "direction": "E",
+        "x": 5,
+        "y": 9,
+        "alive": true
+      },
+      "takes": false
+    }
+  ]
 }
 ```
 
@@ -285,52 +291,52 @@ Get the list of legal moves in a structured format (cf struct definition section
 ```
 ```example
 [
-	{
-		"from_x": 2,
-		"from_y": 0,
-		"to_x": 2,
-		"to_y": 1,
-		"piece": {
-			"color": "Red",
-			"type": "S",
-			"direction": "W",
-			"x": 2,
-			"y": 0,
-			"alive": true
-		},
-		"takes": false
-	},
-	{
-		"from_x": 2,
-		"from_y": 0,
-		"to_x": 1,
-		"to_y": 0,
-		"piece": {
-			"color": "Red",
-			"type": "S",
-			"direction": "W",
-			"x": 2,
-			"y": 0,
-			"alive": true
-		},
-		"takes": false
-	},
-	// [...],
-	{
-		"from_x": 7,
-		"from_y": 0,
-		"to_x": 9,
-		"to_y": 1,
-		"piece": {
-			"color": "Red",
-			"type": "S",
-			"direction": "E",
-			"x": 7,
-			"y": 0,
-			"alive": true
-		},
-		"takes": false
-	}
+  {
+    "from_x": 2,
+    "from_y": 0,
+    "to_x": 2,
+    "to_y": 1,
+    "piece": {
+      "color": "Red",
+      "type": "S",
+      "direction": "W",
+      "x": 2,
+      "y": 0,
+      "alive": true
+    },
+    "takes": false
+  },
+  {
+    "from_x": 2,
+    "from_y": 0,
+    "to_x": 1,
+    "to_y": 0,
+    "piece": {
+      "color": "Red",
+      "type": "S",
+      "direction": "W",
+      "x": 2,
+      "y": 0,
+      "alive": true
+    },
+    "takes": false
+  },
+  // [...],
+  {
+    "from_x": 7,
+    "from_y": 0,
+    "to_x": 9,
+    "to_y": 1,
+    "piece": {
+      "color": "Red",
+      "type": "S",
+      "direction": "E",
+      "x": 7,
+      "y": 0,
+      "alive": true
+    },
+    "takes": false
+  }
 ]
 ```
 
